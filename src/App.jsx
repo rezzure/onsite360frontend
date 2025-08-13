@@ -20,6 +20,8 @@ import SiteProgressUpdate from './Pages/Supervisor.jsx/SiteProgressUpdate'
 import ExpenseEntry from './Pages/Supervisor.jsx/ExpenseEntry'
 import ViewHistory from './Pages/Supervisor.jsx/ViewHistory'
 import SiteUpdates from './Pages/ClientPage/SiteUpdates'
+import QuerySupport from './Pages/AdminOnly/QuerySupport'
+import HelpDesk from './Pages/ClientPage/HelpDesk'
 
 function App() {
 
@@ -48,6 +50,7 @@ function App() {
             <Route path="expense-approval" element={<ExpenseApproval />} />
 
             <Route path="site-user" element={<SiteUserManagement />} />
+            <Route path="query-support" element={<QuerySupport/>} />
             <Route index element={<AdminDashboard />} />
           </Route>
 
@@ -74,6 +77,7 @@ function App() {
             <Route index element={<ClientDashboard />} />
             <Route path="site-update" element={<SiteUpdates />} />
             <Route path="payment" element={<Payments />} />
+            <Route path="help-desk-client" element={<HelpDesk/>} />
           </Route>
 
           <Route path="*" element={<Navigate to="/login" replace />} />

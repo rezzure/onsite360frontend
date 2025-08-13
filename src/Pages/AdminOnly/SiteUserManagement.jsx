@@ -101,6 +101,7 @@ const SiteUserManagement = () => {
       body: JSON.stringify(userForm)
       });
       const data= await response.json()
+      console.log(`user created ${data}`)
       console.log(users);
       if(data.success){
         alert('new User created ');
@@ -187,7 +188,7 @@ const SiteUserManagement = () => {
       })
 
       const result = await response.json()
-      console.log(result)
+      console.log(`site created ${result}`)
       if(result.success){
         return alert("New Site Created..")
       }
