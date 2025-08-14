@@ -1,4 +1,3 @@
-
 import axios from "axios";
 import React, { useContext, useState } from "react";
 import { AuthContext } from "../../ContextApi/AuthContext";
@@ -37,51 +36,65 @@ const HelpDesk = () => {
   const [queryHistory, setQueryHistory] = useState([]);
   const [selectedQuery, setSelectedQuery] = useState(null);
 
-  // Comment: Use default client ID for testing/demo purposes
-  const clientId = localStorage.getItem('_id') 
-   
-  
 
-
-   // Add new query type to master data
+  // Add new query type to master data
   const addQueryType = () => {
     if (newQueryType.trim() && !queryTypes.includes(newQueryType)) {
-      setQueryTypes(prev => [...prev, newQueryType]);
-      setNewQueryType('');
+      setQueryTypes((prev) => [...prev, newQueryType]);
+      setNewQueryType("");
     }
   };
 
-  // Comment: Fetch client queries from backend API only after successful POST
+
   const fetchClientQueries = async () => {
-    try {
-      const response = await axios.get(
-        `${backendURL}/api/queries/client/${clientId}`
-      );
-      if (response.data && response.data.success) {
-        // Filter out empty/invalid queries (e.g., missing required fields)
-        const filtered = (response.data.data || []).filter(
-          (q) => q && q.queryType && q.description
-        );
-        setQueryHistory(filtered);
-      } else {
-        setQueryHistory([]);
-        console.error(
-          "Failed to fetch queries:",
-          response.data?.message || "Unknown error"
-        );
-      }
-    } catch (error) {
+  try {
+    const clientId = localStorage.getItem('_id');
+    console.log('Fetching queries for client:', clientId); // Debug log
+    
+    const response = await axios.get(
+      `${backendURL}/api/queries/client/${clientId}`);
+      // {
+      //   headers: {
+      //     'Authorization': `Bearer ${localStorage.getItem('token')}` // Add if using auth
+      //   }
+      // }
+   
+    
+    console.log('API Response:', response.data); // Debug log
+    
+    if (response.data && response.data.success) {
+      // Ensure we're working with an array
+      const queries = Array.isArray(response.data.data) ? response.data.data : [];
+      console.log('Processed queries:', queries); // Debug log
+      setQueryHistory(queries);
+    } else {
       setQueryHistory([]);
-      console.error("Error fetching client queries:", error.message || error);
+      console.error(
+        "Failed to fetch queries:",
+        response.data?.message || "Unknown error"
+      );
     }
-  };
+  } catch (error) {
+    console.error("Error fetching client queries:", error);
+    toast.error(error.response?.data?.message || "Failed to fetch queries");
+    setQueryHistory([]);
+  }
+};
 
-  // Fetch queries on component mount
+  // // Fetch queries on component mount
+  // React.useEffect(() => {
+  //   fetchClientQueries();
+  // }, [backendURL]);
+  
   React.useEffect(() => {
+  const clientId = localStorage.getItem('_id');
+  if (clientId) {
     fetchClientQueries();
-    // eslint-disable-next-line
-  }, [backendURL]);
-
+  } else {
+    console.error('No client ID found in localStorage');
+    toast.error('Please log in to view queries');
+  }
+}, [backendURL]); // Add clientId as dependency
   // UI state
   const [isFormVisible, setIsFormVisible] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -110,24 +123,24 @@ const HelpDesk = () => {
   };
 
   // Submit the query form
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Comment: Use default client and project for testing/demo purposes
-    // TODO: Replace these with real client and project IDs when available
-    const clientId = localStorage.getItem('_id') ; // Comment: Replace with actual client ID in production
-    // const defaultProjectId = "default-project-id"; // Comment: Replace with actual project ID in production
-   
-    // const clientId = 
-    // const siteId = clientId.site.
-    // Comment: API call to submit the query to the server
     try {
+      const clientId = localStorage.getItem("_id");
+      if (!clientId) {
+        toast.error("Client ID not found. Please log in again.");
+        return;
+      }
+
       const formDataToSend = new FormData();
-      formDataToSend.append("client",String(clientId));
-      // formDataToSend.append("project", defaultProjectId);
+      formDataToSend.append("clientId", clientId);
       formDataToSend.append("queryType", formData.queryType);
       formDataToSend.append("description", formData.description);
+
+      // Append each photo file
       formData.photos.forEach((photo) => {
         formDataToSend.append("photos", photo);
       });
@@ -142,20 +155,19 @@ const HelpDesk = () => {
         }
       );
 
-      console.log(response.data);
       if (response.data.success) {
         toast.success("Query submitted successfully");
-        // After successful submission, fetch the latest query history from backend
         await fetchClientQueries();
         resetForm();
+      } else {
+        throw new Error(response.data.message || "Failed to submit query");
       }
     } catch (error) {
       console.error("Failed to submit query:", error);
+      toast.error(error.message || "Failed to submit query");
     } finally {
       setIsSubmitting(false);
     }
-
-    // Remove mock query addition to prevent empty query in UI
   };
 
   // Submit client reply to admin response
@@ -177,12 +189,19 @@ const HelpDesk = () => {
       );
       if (response.data && response.data.success) {
         // Update selectedQuery and queryHistory with new communications
-        setSelectedQuery(prev => ({ ...prev, communications: response.data.data.communications }));
-        setQueryHistory(prev => prev.map(q => {
-          const qid = q._id || q.id;
-          return qid === queryId ? { ...q, communications: response.data.data.communications } : q;
+        setSelectedQuery((prev) => ({
+          ...prev,
+          communications: response.data.data.communications,
         }));
-        setFormData(prev => ({ ...prev, clientReply: "" }));
+        setQueryHistory((prev) =>
+          prev.map((q) => {
+            const qid = q._id || q.id;
+            return qid === queryId
+              ? { ...q, communications: response.data.data.communications }
+              : q;
+          })
+        );
+        setFormData((prev) => ({ ...prev, clientReply: "" }));
         toast.success("Reply submitted successfully");
       }
     } catch (error) {
@@ -366,7 +385,9 @@ const HelpDesk = () => {
             onClick={() => setShowQueryType((prev) => !prev)}
             className="px-2 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors font-bold"
           >
-            {showQueryType ? "Hide Query Type" : "Do not find your query type ? "}
+            {showQueryType
+              ? "Hide Query Type"
+              : "Do not find your query type ? "}
           </button>
 
           {/* Toggle Form Visibility Button */}
@@ -511,65 +532,97 @@ const HelpDesk = () => {
                 </div>
 
                 {/* Conversation History (always from communications array) */}
-                {selectedQuery && Array.isArray(selectedQuery.communications) && (
-                  <div className="mb-6 bg-blue-50 p-4 rounded-md">
-                    <h3 className="text-lg font-medium text-blue-800 mb-2">
-                      Conversation History
-                    </h3>
+                {selectedQuery &&
+                  Array.isArray(selectedQuery.communications) && (
+                    <div className="mb-6 bg-blue-50 p-4 rounded-md">
+                      <h3 className="text-lg font-medium text-blue-800 mb-2">
+                        Conversation History
+                      </h3>
 
-                    {/* Scrollable chat container */}
-                    <div className="max-h-60 overflow-y-auto mb-4 space-y-3 ">
-                      {selectedQuery.communications.length > 0 ? (
-                        selectedQuery.communications.map((comm, idx) => (
-                          <div key={idx} className={`bg-white p-3 rounded-lg shadow-sm border-l-4 mb-4 ${comm.sender === 'admin' ? 'border-blue-500' : 'border-green-500'} ${comm.sender === 'client' ? '' : 'ml-6'}`}>
-                            <p className={`font-medium ${comm.sender === 'admin' ? 'text-blue-700' : 'text-green-700'}`}>{comm.sender === 'admin' ? 'Admin:' : 'You:'}</p>
-                            <p className="text-gray-700 ">{comm.message}</p>
-                            <span className="text-xs text-gray-400">{comm.sentAt ? new Date(comm.sentAt).toLocaleString() : ''}</span>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-gray-500">No conversation yet.</p>
-                      )}
+                      {/* Scrollable chat container */}
+                      <div className="max-h-60 overflow-y-auto mb-4 space-y-3 ">
+                        {selectedQuery.communications.length > 0 ? (
+                          selectedQuery.communications.map((comm, idx) => (
+                            <div
+                              key={idx}
+                              className={`bg-white p-3 rounded-lg shadow-sm border-l-4 mb-4 ${
+                                comm.sender === "admin"
+                                  ? "border-blue-500"
+                                  : "border-green-500"
+                              } ${comm.sender === "client" ? "" : "ml-6"}`}
+                            >
+                              <p
+                                className={`font-medium ${
+                                  comm.sender === "admin"
+                                    ? "text-blue-700"
+                                    : "text-green-700"
+                                }`}
+                              >
+                                {comm.sender === "admin" ? "Admin:" : "You:"}
+                              </p>
+                              <p className="text-gray-700 ">{comm.message}</p>
+                              <span className="text-xs text-gray-400">
+                                {comm.sentAt
+                                  ? new Date(comm.sentAt).toLocaleString()
+                                  : ""}
+                              </span>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-gray-500">No conversation yet.</p>
+                        )}
+                      </div>
+
+                      {/* Client Reply Form: only show if last message is from admin and query is not closed */}
+                      {(() => {
+                        if (
+                          !selectedQuery.communications ||
+                          selectedQuery.communications.length === 0
+                        )
+                          return null;
+                        const lastComm =
+                          selectedQuery.communications[
+                            selectedQuery.communications.length - 1
+                          ];
+                        if (
+                          lastComm.sender === "admin" &&
+                          selectedQuery.status !== "closed"
+                        ) {
+                          return (
+                            <div className="mt-4">
+                              <label
+                                htmlFor="clientReply"
+                                className="block text-gray-700 font-medium mb-2"
+                              >
+                                Your Reply
+                              </label>
+                              <textarea
+                                id="clientReply"
+                                name="clientReply"
+                                value={formData.clientReply}
+                                onChange={handleChange}
+                                rows={3}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Write your reply to the admin..."
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  handleClientReply(
+                                    selectedQuery._id || selectedQuery.id
+                                  );
+                                }}
+                                className="mt-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                              >
+                                Submit Reply
+                              </button>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
-
-                    {/* Client Reply Form: only show if last message is from admin and query is not closed */}
-                    {(() => {
-                      if (!selectedQuery.communications || selectedQuery.communications.length === 0) return null;
-                      const lastComm = selectedQuery.communications[selectedQuery.communications.length - 1];
-                      if (lastComm.sender === 'admin' && selectedQuery.status !== 'closed') {
-                        return (
-                          <div className="mt-4">
-                            <label
-                              htmlFor="clientReply"
-                              className="block text-gray-700 font-medium mb-2"
-                            >
-                              Your Reply
-                            </label>
-                            <textarea
-                              id="clientReply"
-                              name="clientReply"
-                              value={formData.clientReply}
-                              onChange={handleChange}
-                              rows={3}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              placeholder="Write your reply to the admin..."
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                handleClientReply(selectedQuery._id || selectedQuery.id);
-                              }}
-                              className="mt-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                            >
-                              Submit Reply
-                            </button>
-                          </div>
-                        );
-                      }
-                      return null;
-                    })()}
-                  </div>
-                )}
+                  )}
 
                 {/* Submit Button (only for new queries) */}
                 {!selectedQuery && (

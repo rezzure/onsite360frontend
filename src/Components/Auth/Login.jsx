@@ -184,6 +184,10 @@ const Login = () => {
       if (data.success) {
         setIsLogin(true)
         console.log(data.token)
+    
+
+
+
         localStorage.setItem('token', data.token);
         localStorage.setItem('name', data.data.name);
         localStorage.setItem('email', data.data.email);

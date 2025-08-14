@@ -16,7 +16,8 @@ const SiteUserManagement = () => {
   const [successMessage, setSuccessMessage] = useState('');
 
 
-   const { navigate, backendURL } = useContext(AuthContext)
+   const { backendURL, clientName, setClientName, clientSites, setClientSites  } = useContext(AuthContext)
+   console.log(clientName, clientSites)
   
   // Form states
   const [userForm, setUserForm] = useState({
@@ -189,6 +190,8 @@ const SiteUserManagement = () => {
 
       const result = await response.json()
       console.log(`site created ${result}`)
+      // setClientName(result.clientName)
+      // setClientSites(result.siteName)
       if(result.success){
         return alert("New Site Created..")
       }
@@ -228,6 +231,8 @@ const SiteUserManagement = () => {
       })
       let data = await response.json()
       console.log(data)
+      // clientName, setClientName, clientSites, setClientSites
+      // setClientName(data.)
       setSites(data)
       console.log(sites)
 
@@ -513,7 +518,7 @@ const SiteUserManagement = () => {
             <div className="flex justify-center items-center h-40">
               <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
             </div>
-          ) : users.data.length === 0 ? (
+          ) : users.data?.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -534,7 +539,7 @@ const SiteUserManagement = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {users.data.map(user => (
+                  {users.data?.map(user => (
                     <tr key={user._id}>
                       <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{user.name}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{user.email}</td>

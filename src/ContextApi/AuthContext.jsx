@@ -7,10 +7,12 @@ export const AuthContext = createContext();
 
 
 
+
 export const AuthProvider = ({ children }) => {
 
-  
-
+  const [clientName, setClientName] = useState('')
+  const [clientSites, setClientSites] = useState([])
+  // const [clientSupervisors, setClientSupervisors] = useState([])
   const [token, setToken] = useState("")
   const navigate = useNavigate();
 
@@ -34,7 +36,7 @@ export const AuthProvider = ({ children }) => {
 
 
   return (
-    <AuthContext.Provider value={{  backendURL, navigate, setToken, token, handleLogOut }}>
+    <AuthContext.Provider value={{  backendURL, navigate, setToken, token, handleLogOut , clientName, setClientName, clientSites, setClientSites}}>
 
       {children}
     </AuthContext.Provider>

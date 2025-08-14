@@ -30,8 +30,6 @@ function App() {
     <>
       <div className=' px-2'>
 
-
-
         <Routes>
 
           <Route path="/" element={<Home />} />
